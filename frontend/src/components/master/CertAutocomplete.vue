@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { masterApi } from '../../api/master'
 import type { MasterCertification } from '../../types'
 

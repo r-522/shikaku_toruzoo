@@ -1,5 +1,3 @@
-import { ref } from 'vue'
-
 export function useDebounce<T extends (...args: unknown[]) => void>(fn: T, delay = 300) {
   let timer: ReturnType<typeof setTimeout> | null = null
 
