@@ -31,14 +31,23 @@ export interface MasterCertification {
   category: string
 }
 
+export interface CommunityGoal {
+  certification_name: string
+  status: GoalStatus
+  study_hours: number
+  target_date: string
+}
+
 export interface CommunityUser {
   id: string
   username: string
   certification_count: number
   goal_count: number
   achieved_count: number
+  total_study_hours: number
   has_good_mark: boolean
   is_favorite: boolean
+  goals: CommunityGoal[]
 }
 
 export interface CommunityUserDetail {

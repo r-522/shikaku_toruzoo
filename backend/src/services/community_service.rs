@@ -5,14 +5,24 @@ use crate::db::SupabaseClient;
 use crate::errors::AppError;
 
 #[derive(Debug, serde::Serialize)]
+pub struct CommunityGoal {
+    pub certification_name: String,
+    pub status: String,
+    pub study_hours: f64,
+    pub target_date: String,
+}
+
+#[derive(Debug, serde::Serialize)]
 pub struct CommunityUser {
     pub id: Uuid,
     pub username: String,
     pub certification_count: i64,
     pub goal_count: i64,
     pub achieved_count: i64,
+    pub total_study_hours: f64,
     pub has_good_mark: bool,
     pub is_favorite: bool,
+    pub goals: Vec<CommunityGoal>,
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -56,21 +66,44 @@ pub async fn list_users(
         }
     }
 
-    // 3. Get goals (user_id + status) to count per user
+    // 3. Get goals with master name, status, study_hours
     let goals_result = db
-        .select("TBL_GOAL", "select=goaui,goast")
+        .select("TBL_GOAL", "select=goaui,goast,goash,goatd,TBL_MASTER(masnm)")
         .await?;
     let goals: Vec<serde_json::Value> = serde_json::from_value(goals_result)
         .map_err(|e| AppError::Internal(format!("Parse error: {}", e)))?;
 
     let mut goal_counts: HashMap<String, i64> = HashMap::new();
     let mut passed_counts: HashMap<String, i64> = HashMap::new();
+    let mut study_hours_map: HashMap<String, f64> = HashMap::new();
+    let mut goals_map: HashMap<String, Vec<CommunityGoal>> = HashMap::new();
+
     for g in &goals {
         if let Some(uid) = g["goaui"].as_str() {
             *goal_counts.entry(uid.to_string()).or_insert(0) += 1;
+            let hours = g["goash"].as_f64().unwrap_or(0.0);
+            *study_hours_map.entry(uid.to_string()).or_insert(0.0) += hours;
+
             if g["goast"].as_str() == Some("passed") {
                 *passed_counts.entry(uid.to_string()).or_insert(0) += 1;
             }
+
+            let cert_name = g["TBL_MASTER"]["masnm"]
+                .as_str()
+                .unwrap_or("")
+                .to_string();
+            let status = g["goast"].as_str().unwrap_or("").to_string();
+            let target_date = g["goatd"].as_str().unwrap_or("").to_string();
+
+            goals_map
+                .entry(uid.to_string())
+                .or_insert_with(Vec::new)
+                .push(CommunityGoal {
+                    certification_name: cert_name,
+                    status,
+                    study_hours: hours,
+                    target_date,
+                });
         }
     }
 
@@ -99,7 +132,9 @@ pub async fn list_users(
             let cert_count = *cert_counts.get(uid_str).unwrap_or(&0);
             let goal_count = *goal_counts.get(uid_str).unwrap_or(&0);
             let achieved_count = *passed_counts.get(uid_str).unwrap_or(&0);
+            let total_study_hours = *study_hours_map.get(uid_str).unwrap_or(&0.0);
             let is_favorite = fav_set.contains(&uid_str.to_string());
+            let user_goals = goals_map.remove(uid_str).unwrap_or_default();
 
             Some(CommunityUser {
                 id: uid,
@@ -107,8 +142,10 @@ pub async fn list_users(
                 certification_count: cert_count,
                 goal_count,
                 achieved_count,
+                total_study_hours,
                 has_good_mark: achieved_count > 0,
                 is_favorite,
+                goals: user_goals,
             })
         })
         .skip(offset)
