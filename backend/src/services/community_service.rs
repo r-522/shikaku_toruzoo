@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::db::SupabaseClient;
@@ -29,44 +30,90 @@ pub async fn list_users(
     page: i64,
     per_page: i64,
 ) -> Result<(Vec<CommunityUser>, i64), AppError> {
-    let offset = (page - 1) * per_page;
-
-    let result = db
-        .rpc(
-            "get_community_users",
-            &serde_json::json!({
-                "p_user_id": user_id.to_string(),
-                "p_limit": per_page,
-                "p_offset": offset,
-            }),
+    // 1. Get all users except self
+    let users_result = db
+        .select(
+            "TBL_USER",
+            &format!("select=useid,usenm&useid=neq.{}&order=useca.desc", user_id),
         )
         .await?;
-
-    let rows: Vec<serde_json::Value> = serde_json::from_value(result)
+    let all_users: Vec<serde_json::Value> = serde_json::from_value(users_result)
         .map_err(|e| AppError::Internal(format!("Parse error: {}", e)))?;
 
-    let users: Vec<CommunityUser> = rows
+    let total = all_users.len() as i64;
+
+    // 2. Get holdings (user_id only) to count per user
+    let holdings_result = db
+        .select("TBL_HOLDING", "select=holui")
+        .await?;
+    let holdings: Vec<serde_json::Value> = serde_json::from_value(holdings_result)
+        .map_err(|e| AppError::Internal(format!("Parse error: {}", e)))?;
+
+    let mut cert_counts: HashMap<String, i64> = HashMap::new();
+    for h in &holdings {
+        if let Some(uid) = h["holui"].as_str() {
+            *cert_counts.entry(uid.to_string()).or_insert(0) += 1;
+        }
+    }
+
+    // 3. Get goals (user_id + status) to count per user
+    let goals_result = db
+        .select("TBL_GOAL", "select=goaui,goast")
+        .await?;
+    let goals: Vec<serde_json::Value> = serde_json::from_value(goals_result)
+        .map_err(|e| AppError::Internal(format!("Parse error: {}", e)))?;
+
+    let mut goal_counts: HashMap<String, i64> = HashMap::new();
+    let mut passed_counts: HashMap<String, i64> = HashMap::new();
+    for g in &goals {
+        if let Some(uid) = g["goaui"].as_str() {
+            *goal_counts.entry(uid.to_string()).or_insert(0) += 1;
+            if g["goast"].as_str() == Some("passed") {
+                *passed_counts.entry(uid.to_string()).or_insert(0) += 1;
+            }
+        }
+    }
+
+    // 4. Get favorites for current user
+    let favs_result = db
+        .select(
+            "TBL_FAVORITE",
+            &format!("select=favti&favui=eq.{}", user_id),
+        )
+        .await?;
+    let favs: Vec<serde_json::Value> = serde_json::from_value(favs_result)
+        .map_err(|e| AppError::Internal(format!("Parse error: {}", e)))?;
+
+    let fav_set: Vec<String> = favs
         .iter()
-        .filter_map(|r| {
-            Some(CommunityUser {
-                id: Uuid::parse_str(r["user_id"].as_str()?).ok()?,
-                username: r["username"].as_str()?.to_string(),
-                certification_count: r["certification_count"].as_i64().unwrap_or(0),
-                goal_count: r["goal_count"].as_i64().unwrap_or(0),
-                achieved_count: r["achieved_count"].as_i64().unwrap_or(0),
-                has_good_mark: r["has_good_mark"].as_bool().unwrap_or(false),
-                is_favorite: r["is_favorite"].as_bool().unwrap_or(false),
-            })
-        })
+        .filter_map(|f| f["favti"].as_str().map(|s| s.to_string()))
         .collect();
 
-    // Get total user count (excluding self)
-    let count_result = db
-        .select("TBL_USER", &format!("select=useid&useid=neq.{}", user_id))
-        .await?;
-    let all_users: Vec<serde_json::Value> = serde_json::from_value(count_result)
-        .map_err(|e| AppError::Internal(format!("Parse error: {}", e)))?;
-    let total = all_users.len() as i64;
+    // 5. Build community users with pagination
+    let offset = ((page - 1) * per_page) as usize;
+    let users: Vec<CommunityUser> = all_users
+        .iter()
+        .filter_map(|u| {
+            let uid_str = u["useid"].as_str()?;
+            let uid = Uuid::parse_str(uid_str).ok()?;
+            let cert_count = *cert_counts.get(uid_str).unwrap_or(&0);
+            let goal_count = *goal_counts.get(uid_str).unwrap_or(&0);
+            let achieved_count = *passed_counts.get(uid_str).unwrap_or(&0);
+            let is_favorite = fav_set.contains(&uid_str.to_string());
+
+            Some(CommunityUser {
+                id: uid,
+                username: u["usenm"].as_str()?.to_string(),
+                certification_count: cert_count,
+                goal_count,
+                achieved_count,
+                has_good_mark: achieved_count > 0,
+                is_favorite,
+            })
+        })
+        .skip(offset)
+        .take(per_page as usize)
+        .collect();
 
     Ok((users, total))
 }
@@ -74,7 +121,7 @@ pub async fn list_users(
 pub async fn get_user(
     db: &SupabaseClient,
     target_user_id: Uuid,
-    viewer_user_id: Uuid,
+    _viewer_user_id: Uuid,
 ) -> Result<CommunityUserDetail, AppError> {
     // Get user info
     let user_result = db
@@ -89,7 +136,7 @@ pub async fn get_user(
         .first()
         .ok_or_else(|| AppError::NotFound("ユーザーが見つかりません".to_string()))?;
 
-    // Get certifications
+    // Get certifications with master name
     let certs = db
         .select(
             "TBL_HOLDING",
@@ -102,12 +149,12 @@ pub async fn get_user(
     let certs: Vec<serde_json::Value> = serde_json::from_value(certs)
         .map_err(|e| AppError::Internal(format!("Parse error: {}", e)))?;
 
-    // Get goals
+    // Get goals with master name
     let goals = db
         .select(
             "TBL_GOAL",
             &format!(
-                "select=goaid,goatd,goast,goamm,goaca,TBL_MASTER(masid,masnm)&goaui=eq.{}&order=goaca.desc",
+                "select=goaid,goatd,goast,goamm,goash,goaca,TBL_MASTER(masid,masnm)&goaui=eq.{}&order=goaca.desc",
                 target_user_id
             ),
         )
@@ -115,8 +162,8 @@ pub async fn get_user(
     let goals: Vec<serde_json::Value> = serde_json::from_value(goals)
         .map_err(|e| AppError::Internal(format!("Parse error: {}", e)))?;
 
-    // Check for achieved goals
-    let has_good_mark = goals.iter().any(|g| g["goast"].as_str() == Some("achieved"));
+    // Check for passed goals
+    let has_good_mark = goals.iter().any(|g| g["goast"].as_str() == Some("passed"));
 
     Ok(CommunityUserDetail {
         id: target_user_id,
