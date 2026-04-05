@@ -75,10 +75,10 @@ const formInitial = ref<Partial<GoalFormType> | undefined>(undefined)
 onMounted(() => goalStore.fetchAll())
 
 const sections = computed(() => [
-  { key: 'studying', label: '学習中', goals: goalStore.studyingGoals },
-  { key: 'scheduled', label: '受験予定', goals: goalStore.scheduledGoals },
-  { key: 'achieved', label: '達成', goals: goalStore.achievedGoals },
-  { key: 'suspended', label: '中断', goals: goalStore.suspendedGoals },
+  { key: 'exam_date', label: '受験日', goals: goalStore.examDateGoals },
+  { key: 'passed', label: '合格', goals: goalStore.passedGoals },
+  { key: 'failed', label: '不合格', goals: goalStore.failedGoals },
+  { key: 'abandoned', label: '断念', goals: goalStore.abandonedGoals },
 ])
 
 function openAdd() {
@@ -96,6 +96,7 @@ function openEdit(goal: Goal) {
     target_date: goal.target_date,
     status: goal.status,
     memo: goal.memo || '',
+    study_hours: goal.study_hours || 0,
   }
   showForm.value = true
 }
@@ -116,10 +117,10 @@ async function handleSubmit() {
         target_date: form.target_date,
         status: form.status,
         memo: form.memo,
+        study_hours: form.study_hours,
       })
-      // If status changed to achieved, offer to add to holdings
-      if (prev && prev.status !== 'achieved' && form.status === 'achieved') {
-        if (confirm('達成おめでとうございます！所持資格に追加しますか？')) {
+      if (prev && prev.status !== 'passed' && form.status === 'passed') {
+        if (confirm('合格おめでとうございます！所持資格に追加しますか？')) {
           await certStore.add({
             certification_name: form.certification_name,
             master_id: form.master_id,
