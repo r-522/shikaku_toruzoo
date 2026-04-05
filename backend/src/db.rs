@@ -11,9 +11,13 @@ pub struct SupabaseClient {
 
 impl SupabaseClient {
     pub fn new(base_url: &str, api_key: &str) -> Self {
+        let mut url = base_url.trim_end_matches('/').to_string();
+        if !url.ends_with("/rest/v1") {
+            url.push_str("/rest/v1");
+        }
         Self {
             client: Client::new(),
-            base_url: base_url.to_string(),
+            base_url: url,
             api_key: api_key.to_string(),
         }
     }
