@@ -9,7 +9,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # ===== Stage 2: バックエンドビルド =====
-FROM rust:1.78-slim AS backend-builder
+FROM rust:1.85-slim AS backend-builder
 WORKDIR /app
 
 COPY backend/Cargo.toml ./
