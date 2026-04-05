@@ -2,8 +2,8 @@
 FROM node:20-slim AS frontend-builder
 WORKDIR /app/frontend
 
-COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci
+COPY frontend/package.json ./
+RUN npm install
 
 COPY frontend/ ./
 RUN npm run build
@@ -12,7 +12,7 @@ RUN npm run build
 FROM rust:1.78-slim AS backend-builder
 WORKDIR /app
 
-COPY backend/Cargo.toml backend/Cargo.lock ./
+COPY backend/Cargo.toml ./
 RUN mkdir src && echo 'fn main() {}' > src/main.rs && cargo build --release && rm -rf src
 
 COPY backend/src/ src/
