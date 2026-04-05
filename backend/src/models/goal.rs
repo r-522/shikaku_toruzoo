@@ -10,6 +10,7 @@ pub struct Goal {
     pub goatd: String,
     pub goast: String,
     pub goamm: Option<String>,
+    pub goash: Option<f64>,
     pub goaca: String,
     pub goaua: String,
 }
@@ -23,6 +24,7 @@ pub struct GoalRequest {
     pub status: Option<String>,
     #[validate(length(max = 1000, message = "メモは1000文字以内で入力してください"))]
     pub memo: Option<String>,
+    pub study_hours: Option<f64>,
 }
 
 #[derive(Debug, Deserialize, Validate)]
@@ -31,6 +33,7 @@ pub struct GoalUpdateRequest {
     pub status: Option<String>,
     #[validate(length(max = 1000, message = "メモは1000文字以内で入力してください"))]
     pub memo: Option<String>,
+    pub study_hours: Option<f64>,
 }
 
 #[derive(Debug, Serialize)]
@@ -41,5 +44,6 @@ pub struct GoalResponse {
     pub target_date: String,
     pub status: String,
     pub memo: Option<String>,
+    pub study_hours: f64,
     pub created_at: String,
 }

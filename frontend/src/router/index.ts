@@ -8,9 +8,9 @@ const router = createRouter({
     { path: '/signup', name: 'SignUp', component: () => import('../views/SignUpView.vue'), meta: { requiresAuth: false } },
     { path: '/signin', name: 'SignIn', component: () => import('../views/SignInView.vue'), meta: { requiresAuth: false } },
     { path: '/dashboard', name: 'Dashboard', component: () => import('../views/DashboardView.vue'), meta: { requiresAuth: true } },
-    { path: '/certifications', name: 'Certifications', component: () => import('../views/CertificationView.vue'), meta: { requiresAuth: true } },
-    { path: '/goals', name: 'Goals', component: () => import('../views/GoalView.vue'), meta: { requiresAuth: true } },
-    { path: '/community', name: 'Community', component: () => import('../views/CommunityView.vue'), meta: { requiresAuth: true } },
+    { path: '/certifications', redirect: '/dashboard' },
+    { path: '/goals', redirect: '/dashboard' },
+    { path: '/community', redirect: '/dashboard' },
     { path: '/community/:id', name: 'UserDetail', component: () => import('../views/UserDetailView.vue'), meta: { requiresAuth: true } },
   ],
 })

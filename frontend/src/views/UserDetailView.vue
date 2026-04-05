@@ -87,7 +87,7 @@ function getGoalName(goal: any): string {
 }
 
 function getGoalStatus(goal: any): GoalStatus {
-  return (goal.status || goal.goast || 'studying') as GoalStatus
+  return (goal.status || goal.goast || 'exam_date') as GoalStatus
 }
 
 function getGoalDate(goal: any): string {

@@ -7,10 +7,10 @@ export const useGoalStore = defineStore('goal', () => {
   const goals = ref<Goal[]>([])
   const loading = ref(false)
 
-  const studyingGoals = computed(() => goals.value.filter((g) => g.status === 'studying'))
-  const scheduledGoals = computed(() => goals.value.filter((g) => g.status === 'scheduled'))
-  const achievedGoals = computed(() => goals.value.filter((g) => g.status === 'achieved'))
-  const suspendedGoals = computed(() => goals.value.filter((g) => g.status === 'suspended'))
+  const examDateGoals = computed(() => goals.value.filter((g) => g.status === 'exam_date'))
+  const passedGoals = computed(() => goals.value.filter((g) => g.status === 'passed'))
+  const failedGoals = computed(() => goals.value.filter((g) => g.status === 'failed'))
+  const abandonedGoals = computed(() => goals.value.filter((g) => g.status === 'abandoned'))
 
   async function fetchAll() {
     loading.value = true
@@ -40,7 +40,7 @@ export const useGoalStore = defineStore('goal', () => {
 
   return {
     goals, loading,
-    studyingGoals, scheduledGoals, achievedGoals, suspendedGoals,
+    examDateGoals, passedGoals, failedGoals, abandonedGoals,
     fetchAll, add, update, remove,
   }
 })

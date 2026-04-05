@@ -4,7 +4,7 @@
       <div class="col-md-5">
         <div class="card shadow-sm">
           <div class="card-body p-4">
-            <h4 class="text-center mb-4" style="color: #1A73E8">CertManager</h4>
+            <h4 class="text-center mb-4" style="color: #1A73E8">資格取るぞー！</h4>
             <h5 class="text-center mb-4">サインイン</h5>
             <form @submit.prevent="handleSubmit">
               <div class="mb-3">

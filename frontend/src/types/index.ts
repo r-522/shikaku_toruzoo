@@ -12,7 +12,7 @@ export interface Certification {
   created_at: string
 }
 
-export type GoalStatus = 'studying' | 'scheduled' | 'achieved' | 'suspended'
+export type GoalStatus = 'exam_date' | 'passed' | 'failed' | 'abandoned'
 
 export interface Goal {
   id: string
@@ -21,6 +21,7 @@ export interface Goal {
   target_date: string
   status: GoalStatus
   memo: string | null
+  study_hours: number
   created_at: string
 }
 
@@ -78,4 +79,5 @@ export interface GoalForm {
   target_date: string
   status: GoalStatus
   memo: string
+  study_hours: number
 }

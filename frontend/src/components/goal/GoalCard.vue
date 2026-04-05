@@ -10,6 +10,7 @@
           <div class="d-flex gap-3">
             <small class="text-muted">目標日: {{ goal.target_date }}</small>
             <small :style="{ color: daysColor }">{{ daysText }}</small>
+            <small v-if="goal.study_hours > 0" class="text-muted">{{ goal.study_hours }}h 勉強</small>
           </div>
           <div v-if="goal.memo" class="text-muted small mt-1 text-truncate" style="max-width: 400px">
             {{ goal.memo }}

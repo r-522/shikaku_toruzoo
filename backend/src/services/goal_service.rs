@@ -5,7 +5,7 @@ use crate::errors::AppError;
 use crate::models::goal::{GoalRequest, GoalResponse, GoalUpdateRequest};
 use crate::services::master_service;
 
-const VALID_STATUSES: &[&str] = &["studying", "scheduled", "achieved", "suspended"];
+const VALID_STATUSES: &[&str] = &["exam_date", "passed", "failed", "abandoned"];
 
 pub async fn list(
     db: &SupabaseClient,
@@ -15,7 +15,7 @@ pub async fn list(
         .select(
             "TBL_GOAL",
             &format!(
-                "select=goaid,goami,goatd,goast,goamm,goaca,TBL_MASTER(masid,masnm)&goaui=eq.{}&order=goaca.desc",
+                "select=goaid,goami,goatd,goast,goamm,goash,goaca,TBL_MASTER(masid,masnm)&goaui=eq.{}&order=goaca.desc",
                 user_id
             ),
         )
@@ -35,6 +35,7 @@ pub async fn list(
                 target_date: g["goatd"].as_str()?.to_string(),
                 status: g["goast"].as_str()?.to_string(),
                 memo: g["goamm"].as_str().map(|s| s.to_string()),
+                study_hours: g["goash"].as_f64().unwrap_or(0.0),
                 created_at: g["goaca"].as_str()?.to_string(),
             })
         })
@@ -51,12 +52,14 @@ pub async fn create(
         None => master_service::find_or_create(db, &req.certification_name, "その他").await?,
     };
 
-    let status = req.status.as_deref().unwrap_or("studying");
+    let status = req.status.as_deref().unwrap_or("exam_date");
     if !VALID_STATUSES.contains(&status) {
         return Err(AppError::ValidationError(
             "無効なステータスです".to_string(),
         ));
     }
+
+    let study_hours = req.study_hours.unwrap_or(0.0);
 
     let result = db
         .insert(
@@ -67,6 +70,7 @@ pub async fn create(
                 "goatd": req.target_date,
                 "goast": status,
                 "goamm": req.memo,
+                "goash": study_hours,
             }),
         )
         .await?;
@@ -85,6 +89,7 @@ pub async fn create(
         target_date: req.target_date.clone(),
         status: status.to_string(),
         memo: req.memo.clone(),
+        study_hours,
         created_at: goal["goaca"].as_str().unwrap_or_default().to_string(),
     })
 }
@@ -100,7 +105,7 @@ pub async fn update(
         .select(
             "TBL_GOAL",
             &format!(
-                "select=goaid,goami,goatd,goast,goamm,goaca,TBL_MASTER(masid,masnm)&goaid=eq.{}&goaui=eq.{}",
+                "select=goaid,goami,goatd,goast,goamm,goash,goaca,TBL_MASTER(masid,masnm)&goaid=eq.{}&goaui=eq.{}",
                 goal_id, user_id
             ),
         )
@@ -129,6 +134,9 @@ pub async fn update(
     if let Some(ref memo) = req.memo {
         update_body.insert("goamm".to_string(), serde_json::json!(memo));
     }
+    if let Some(study_hours) = req.study_hours {
+        update_body.insert("goash".to_string(), serde_json::json!(study_hours));
+    }
 
     let result = db
         .update(
@@ -145,7 +153,6 @@ pub async fn update(
         .ok_or_else(|| AppError::Internal("Update returned no data".to_string()))?;
 
     let master = &current["TBL_MASTER"];
-    let new_status = goal["goast"].as_str().unwrap_or("studying");
 
     Ok(GoalResponse {
         id: goal_id,
@@ -153,8 +160,9 @@ pub async fn update(
         master_id: Uuid::parse_str(master["masid"].as_str().unwrap_or_default())
             .map_err(|e| AppError::Internal(format!("UUID parse error: {}", e)))?,
         target_date: goal["goatd"].as_str().unwrap_or_default().to_string(),
-        status: new_status.to_string(),
+        status: goal["goast"].as_str().unwrap_or("exam_date").to_string(),
         memo: goal["goamm"].as_str().map(|s| s.to_string()),
+        study_hours: goal["goash"].as_f64().unwrap_or(0.0),
         created_at: goal["goaca"].as_str().unwrap_or_default().to_string(),
     })
 }

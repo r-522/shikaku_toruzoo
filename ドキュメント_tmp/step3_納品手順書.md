@@ -5,7 +5,7 @@
 ## 1. 概要
 
 ### 1.1 目的
-本手順書は、資格管理・目標設定システム（CertManager）をGoogle Cloud Runへデプロイするための手順を記載する。
+本手順書は、資格管理・目標設定システム（shikaku_toruzoo）をGoogle Cloud Runへデプロイするための手順を記載する。
 
 ### 1.2 デプロイ構成
 
@@ -14,7 +14,7 @@
 │                 Google Cloud Run                     │
 │                                                      │
 │  ┌───────────────────────────────────────────────┐  │
-│  │        CertManager コンテナ                     │  │
+│  │        shikaku_toruzoo コンテナ                     │  │
 │  │                                                │  │
 │  │  ┌─────────────────────────────────────────┐  │  │
 │  │  │  Actix-web (Rust)                        │  │  │
@@ -65,10 +65,10 @@ gcloud services enable \
   cloudbuild.googleapis.com
 
 # Artifact Registry にDockerリポジトリを作成
-gcloud artifacts repositories create certmanager-repo \
+gcloud artifacts repositories create shikaku_toruzoo-repo \
   --repository-format=docker \
   --location=asia-northeast1 \
-  --description="CertManager Docker images"
+  --description="shikaku_toruzoo Docker images"
 ```
 
 ### 2.2 Supabase データベースの初期化
@@ -310,8 +310,8 @@ openssl rand -hex 32
 ### 3.1 リポジトリのクローン
 
 ```bash
-git clone https://github.com/your-org/certmanager.git
-cd certmanager
+git clone https://github.com/your-org/shikaku_toruzoo.git
+cd shikaku_toruzoo
 ```
 
 ### 3.2 フロントエンドのビルド
@@ -346,7 +346,7 @@ cd backend
 cargo build --release
 
 # ビルド成果物の確認
-ls -la target/release/certmanager
+ls -la target/release/shikaku_toruzoo
 
 cd ..
 ```
@@ -398,7 +398,7 @@ RUN useradd -m -s /bin/bash appuser
 WORKDIR /app
 
 # バックエンドバイナリのコピー
-COPY --from=backend-builder /app/target/release/certmanager /app/certmanager
+COPY --from=backend-builder /app/target/release/shikaku_toruzoo /app/shikaku_toruzoo
 
 # フロントエンドビルド成果物のコピー
 COPY --from=frontend-builder /app/frontend/dist /app/static
@@ -416,12 +416,12 @@ ENV SERVER_PORT=8080
 ENV RUST_LOG=info
 ENV STATIC_DIR=/app/static
 
-CMD ["/app/certmanager"]
+CMD ["/app/shikaku_toruzoo"]
 ```
 
 ```bash
 # Dockerイメージのビルド
-docker build -t certmanager:latest .
+docker build -t shikaku_toruzoo:latest .
 
 # ローカルでの動作確認（オプション）
 docker run -p 8080:8080 \
@@ -429,7 +429,7 @@ docker run -p 8080:8080 \
   -e SUPABASE_KEY="your-service-role-key" \
   -e EMAIL_HMAC_SECRET="your-secret" \
   -e CORS_ORIGIN="http://localhost:8080" \
-  certmanager:latest
+  shikaku_toruzoo:latest
 
 # ブラウザで http://localhost:8080 にアクセスして動作確認
 ```
@@ -445,21 +445,21 @@ docker run -p 8080:8080 \
 gcloud auth configure-docker asia-northeast1-docker.pkg.dev
 
 # イメージにタグ付け
-export IMAGE_TAG="asia-northeast1-docker.pkg.dev/$PROJECT_ID/certmanager-repo/certmanager:v1.0.0"
-docker tag certmanager:latest $IMAGE_TAG
+export IMAGE_TAG="asia-northeast1-docker.pkg.dev/$PROJECT_ID/shikaku_toruzoo-repo/shikaku_toruzoo:v1.0.0"
+docker tag shikaku_toruzoo:latest $IMAGE_TAG
 
 # プッシュ
 docker push $IMAGE_TAG
 
 # プッシュされたことを確認
-gcloud artifacts docker images list asia-northeast1-docker.pkg.dev/$PROJECT_ID/certmanager-repo
+gcloud artifacts docker images list asia-northeast1-docker.pkg.dev/$PROJECT_ID/shikaku_toruzoo-repo
 ```
 
 ### 4.2 Cloud Run へのデプロイ
 
 ```bash
 # 初回デプロイ
-gcloud run deploy certmanager \
+gcloud run deploy shikaku_toruzoo \
   --image $IMAGE_TAG \
   --region asia-northeast1 \
   --platform managed \
@@ -474,7 +474,7 @@ gcloud run deploy certmanager \
 SUPABASE_URL=https://xxx.supabase.co/rest/v1,\
 SUPABASE_KEY=your-service-role-key,\
 EMAIL_HMAC_SECRET=your-hmac-secret,\
-CORS_ORIGIN=https://certmanager-xxxx-an.a.run.app,\
+CORS_ORIGIN=https://shikaku_toruzoo-xxxx-an.a.run.app,\
 RUST_LOG=info"
 ```
 
@@ -484,22 +484,22 @@ RUST_LOG=info"
 
 ```bash
 # サービスURLの確認
-gcloud run services describe certmanager \
+gcloud run services describe shikaku_toruzoo \
   --region asia-northeast1 \
   --format "value(status.url)"
-# 出力例: https://certmanager-abc123-an.a.run.app
+# 出力例: https://shikaku_toruzoo-abc123-an.a.run.app
 
 # CORS_ORIGINを実際のURLに更新
-gcloud run services update certmanager \
+gcloud run services update shikaku_toruzoo \
   --region asia-northeast1 \
-  --set-env-vars "CORS_ORIGIN=https://certmanager-abc123-an.a.run.app"
+  --set-env-vars "CORS_ORIGIN=https://shikaku_toruzoo-abc123-an.a.run.app"
 ```
 
 ### 4.4 デプロイ後の動作確認
 
 ```bash
 # サービスURLを変数に設定
-export SERVICE_URL=$(gcloud run services describe certmanager \
+export SERVICE_URL=$(gcloud run services describe shikaku_toruzoo \
   --region asia-northeast1 \
   --format "value(status.url)")
 
@@ -548,17 +548,17 @@ curl -b cookies.txt $SERVICE_URL/api/auth/me
 
 ```bash
 # Cloud Run のログを確認
-gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=certmanager" \
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=shikaku_toruzoo" \
   --limit 50 \
   --format "table(timestamp, jsonPayload.message, jsonPayload.level)"
 
 # リアルタイムログのストリーミング
-gcloud alpha run services logs tail certmanager --region asia-northeast1
+gcloud alpha run services logs tail shikaku_toruzoo --region asia-northeast1
 ```
 
 ### 5.2 Cloud Run のモニタリング
 
-Google Cloud Console > Cloud Run > certmanager から以下を監視する。
+Google Cloud Console > Cloud Run > shikaku_toruzoo から以下を監視する。
 
 | メトリクス | 確認事項 |
 |----------|---------|
@@ -574,7 +574,7 @@ Google Cloud Console > Cloud Run > certmanager から以下を監視する。
 # エラー率のアラートポリシー作成（Cloud Monitoring）
 # 5分間のエラー率が5%を超えた場合に通知
 gcloud alpha monitoring policies create \
-  --display-name="CertManager Error Rate Alert" \
+  --display-name="shikaku_toruzoo Error Rate Alert" \
   --condition-display-name="High Error Rate" \
   --condition-filter='resource.type="cloud_run_revision" AND metric.type="run.googleapis.com/request_count" AND metric.labels.response_code_class="5xx"' \
   --condition-threshold-value=5 \
@@ -615,15 +615,15 @@ cd frontend && npm ci && npm run build && cd ..
 
 # 3. Dockerイメージの再ビルド
 export NEW_VERSION="v1.1.0"
-docker build -t certmanager:$NEW_VERSION .
+docker build -t shikaku_toruzoo:$NEW_VERSION .
 
 # 4. イメージのタグ付けとプッシュ
-export NEW_IMAGE_TAG="asia-northeast1-docker.pkg.dev/$PROJECT_ID/certmanager-repo/certmanager:$NEW_VERSION"
-docker tag certmanager:$NEW_VERSION $NEW_IMAGE_TAG
+export NEW_IMAGE_TAG="asia-northeast1-docker.pkg.dev/$PROJECT_ID/shikaku_toruzoo-repo/shikaku_toruzoo:$NEW_VERSION"
+docker tag shikaku_toruzoo:$NEW_VERSION $NEW_IMAGE_TAG
 docker push $NEW_IMAGE_TAG
 
 # 5. Cloud Run の更新
-gcloud run deploy certmanager \
+gcloud run deploy shikaku_toruzoo \
   --image $NEW_IMAGE_TAG \
   --region asia-northeast1
 ```
@@ -632,10 +632,10 @@ gcloud run deploy certmanager \
 
 ```bash
 # 過去のリビジョン一覧を確認
-gcloud run revisions list --service certmanager --region asia-northeast1
+gcloud run revisions list --service shikaku_toruzoo --region asia-northeast1
 
 # 特定のリビジョンにトラフィックを100%移行
-gcloud run services update-traffic certmanager \
+gcloud run services update-traffic shikaku_toruzoo \
   --region asia-northeast1 \
   --to-revisions REVISION_NAME=100
 ```
@@ -673,13 +673,13 @@ gcloud run services update-traffic certmanager \
 ```bash
 # エラーログのみ抽出
 gcloud logging read \
-  "resource.type=cloud_run_revision AND resource.labels.service_name=certmanager AND jsonPayload.level=ERROR" \
+  "resource.type=cloud_run_revision AND resource.labels.service_name=shikaku_toruzoo AND jsonPayload.level=ERROR" \
   --limit 20 \
   --format json
 
 # 特定の時間範囲のログ
 gcloud logging read \
-  "resource.type=cloud_run_revision AND resource.labels.service_name=certmanager AND timestamp>=\"2025-01-01T00:00:00Z\"" \
+  "resource.type=cloud_run_revision AND resource.labels.service_name=shikaku_toruzoo AND timestamp>=\"2025-01-01T00:00:00Z\"" \
   --limit 50
 ```
 
@@ -687,12 +687,12 @@ gcloud logging read \
 
 ```bash
 # サービスの一時停止（全トラフィックを遮断）
-gcloud run services update certmanager \
+gcloud run services update shikaku_toruzoo \
   --region asia-northeast1 \
   --no-traffic
 
 # サービスの再開
-gcloud run services update-traffic certmanager \
+gcloud run services update-traffic shikaku_toruzoo \
   --region asia-northeast1 \
   --to-latest
 ```
