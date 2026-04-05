@@ -30,11 +30,11 @@
 
     <!-- Add Button -->
     <div class="d-flex justify-content-end mb-3">
-      <div class="dropdown">
-        <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+      <div class="dropdown" style="position: relative">
+        <button class="btn btn-primary dropdown-toggle" type="button" @click="showDropdown = !showDropdown">
           + 新規登録
         </button>
-        <ul class="dropdown-menu">
+        <ul v-if="showDropdown" class="dropdown-menu show" style="position: absolute; right: 0; top: 100%">
           <li><a class="dropdown-item" href="#" @click.prevent="openAddCert">資格を登録</a></li>
           <li><a class="dropdown-item" href="#" @click.prevent="openAddGoal">目標を追加</a></li>
         </ul>
@@ -171,6 +171,7 @@ const goalStore = useGoalStore()
 const communityStore = useCommunityStore()
 const favoriteStore = useFavoriteStore()
 const toast = useToast()
+const showDropdown = ref(false)
 
 onMounted(() => {
   certStore.fetchAll()
@@ -213,6 +214,7 @@ const certFormRef = ref<InstanceType<typeof CertForm> | null>(null)
 const certFormInitial = ref<CertificationForm | undefined>(undefined)
 
 function openAddCert() {
+  showDropdown.value = false
   editingCert.value = false
   certFormInitial.value = undefined
   showCertForm.value = true
@@ -254,6 +256,7 @@ const goalFormRef = ref<InstanceType<typeof GoalForm> | null>(null)
 const goalFormInitial = ref<Partial<GoalFormType> | undefined>(undefined)
 
 function openAddGoal() {
+  showDropdown.value = false
   editingGoal.value = false
   goalFormInitial.value = undefined
   showGoalForm.value = true
