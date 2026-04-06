@@ -5,6 +5,12 @@ use crate::db::SupabaseClient;
 use crate::errors::AppError;
 
 #[derive(Debug, serde::Serialize)]
+pub struct CommunityCert {
+    pub certification_name: String,
+    pub acquired_date: Option<String>,
+}
+
+#[derive(Debug, serde::Serialize)]
 pub struct CommunityGoal {
     pub certification_name: String,
     pub status: String,
@@ -22,6 +28,7 @@ pub struct CommunityUser {
     pub total_study_hours: f64,
     pub has_good_mark: bool,
     pub is_favorite: bool,
+    pub certifications: Vec<CommunityCert>,
     pub goals: Vec<CommunityGoal>,
 }
 
@@ -52,17 +59,30 @@ pub async fn list_users(
 
     let total = all_users.len() as i64;
 
-    // 2. Get holdings (user_id only) to count per user
+    // 2. Get holdings with master name
     let holdings_result = db
-        .select("TBL_HOLDING", "select=holui")
+        .select("TBL_HOLDING", "select=holui,holdt,TBL_MASTER(masnm)")
         .await?;
     let holdings: Vec<serde_json::Value> = serde_json::from_value(holdings_result)
         .map_err(|e| AppError::Internal(format!("Parse error: {}", e)))?;
 
     let mut cert_counts: HashMap<String, i64> = HashMap::new();
+    let mut certs_map: HashMap<String, Vec<CommunityCert>> = HashMap::new();
     for h in &holdings {
         if let Some(uid) = h["holui"].as_str() {
             *cert_counts.entry(uid.to_string()).or_insert(0) += 1;
+            let cert_name = h["TBL_MASTER"]["masnm"]
+                .as_str()
+                .unwrap_or("")
+                .to_string();
+            let acquired_date = h["holdt"].as_str().map(|s| s.to_string());
+            certs_map
+                .entry(uid.to_string())
+                .or_insert_with(Vec::new)
+                .push(CommunityCert {
+                    certification_name: cert_name,
+                    acquired_date,
+                });
         }
     }
 
@@ -134,6 +154,7 @@ pub async fn list_users(
             let achieved_count = *passed_counts.get(uid_str).unwrap_or(&0);
             let total_study_hours = *study_hours_map.get(uid_str).unwrap_or(&0.0);
             let is_favorite = fav_set.contains(&uid_str.to_string());
+            let user_certs = certs_map.remove(uid_str).unwrap_or_default();
             let user_goals = goals_map.remove(uid_str).unwrap_or_default();
 
             Some(CommunityUser {
@@ -145,6 +166,7 @@ pub async fn list_users(
                 total_study_hours,
                 has_good_mark: achieved_count > 0,
                 is_favorite,
+                certifications: user_certs,
                 goals: user_goals,
             })
         })

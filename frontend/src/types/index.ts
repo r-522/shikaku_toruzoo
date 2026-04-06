@@ -31,6 +31,11 @@ export interface MasterCertification {
   category: string
 }
 
+export interface CommunityCert {
+  certification_name: string
+  acquired_date: string | null
+}
+
 export interface CommunityGoal {
   certification_name: string
   status: GoalStatus
@@ -47,6 +52,7 @@ export interface CommunityUser {
   total_study_hours: number
   has_good_mark: boolean
   is_favorite: boolean
+  certifications: CommunityCert[]
   goals: CommunityGoal[]
 }
 
