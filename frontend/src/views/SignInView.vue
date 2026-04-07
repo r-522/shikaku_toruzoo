@@ -16,9 +16,9 @@ router.push('/dashboard') でダッシュボードへ遷移する。
 攻撃者がメールアドレス列挙に使える危険がある。
 ============================================================ -->
 <template>
-  <div class="container py-5">
+  <div class="container py-3 py-md-5">
     <div class="row justify-content-center">
-      <div class="col-md-5">
+      <div class="col-12 col-md-5">
         <div class="card shadow-sm">
           <div class="card-body p-4">
             <h4 class="text-center mb-4" style="color: #1A73E8">資格取るぞー！</h4>

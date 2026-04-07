@@ -49,7 +49,7 @@ Vue の条件分岐は
         </div>
 
         <!-- お気に入り以外のユーザー -->
-        <div class="mb-3" style="display: flex; flex-direction: column; gap: 12px">
+        <div class="d-flex flex-column gap-3 mb-3">
           <UserCard
             v-for="u in others"
             :key="u.id"

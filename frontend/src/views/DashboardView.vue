@@ -30,27 +30,27 @@ OK なら自動的に certStore.add() を呼ぶ連携処理を行う。
       <!-- 所持資格数 -->
       <div class="col-4">
         <div class="card text-center shadow-sm">
-          <div class="card-body py-2">
-            <div class="fs-3 fw-bold" style="color: #1A73E8">{{ certCount }}</div>
-            <div class="text-muted small">所持資格</div>
+          <div class="card-body py-2 px-1 px-sm-3">
+            <div class="fs-5 fs-sm-3 fw-bold" style="color: #1A73E8">{{ certCount }}</div>
+            <div class="text-muted small text-truncate">所持資格</div>
           </div>
         </div>
       </div>
       <!-- 合格数 -->
       <div class="col-4">
         <div class="card text-center shadow-sm">
-          <div class="card-body py-2">
-            <div class="fs-3 fw-bold" style="color: #2E7D32">{{ passedCount }}</div>
-            <div class="text-muted small">合格</div>
+          <div class="card-body py-2 px-1 px-sm-3">
+            <div class="fs-5 fs-sm-3 fw-bold" style="color: #2E7D32">{{ passedCount }}</div>
+            <div class="text-muted small text-truncate">合格</div>
           </div>
         </div>
       </div>
       <!-- 総勉強時間 -->
       <div class="col-4">
         <div class="card text-center shadow-sm">
-          <div class="card-body py-2">
-            <div class="fs-3 fw-bold" style="color: #F57F17">{{ totalStudyHours }}</div>
-            <div class="text-muted small">勉強時間(h)</div>
+          <div class="card-body py-2 px-1 px-sm-3">
+            <div class="fs-5 fs-sm-3 fw-bold" style="color: #F57F17">{{ totalStudyHours }}</div>
+            <div class="text-muted small text-truncate">勉強時間(h)</div>
           </div>
         </div>
       </div>

@@ -21,7 +21,7 @@ Vue のイベントハンドラに処理を委ねる。
 ============================================================ -->
 <template>
   <div v-if="show" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">{{ title }}</h5>
