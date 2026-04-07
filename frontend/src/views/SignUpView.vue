@@ -20,10 +20,10 @@ views/SignUpView.vue — サインアップ（新規登録）画面
 - finally: ローディング状態を確実に解除（成功/失敗に関わらず）
 ============================================================ -->
 <template>
-  <div class="container py-3 py-md-5">
+  <div class="container py-5">
     <!-- 中央揃えの 1 列レイアウト（Bootstrap の行コラムシステム） -->
     <div class="row justify-content-center">
-      <div class="col-12 col-md-5">
+      <div class="col-md-5">
         <div class="card shadow-sm">
           <div class="card-body p-4">
             <!-- ブランド名 -->
