@@ -22,12 +22,11 @@ components/layout/AppHeader.vue — ナビゲーションバー
 
       <!-- 認証済みの場合のみユーザー名とサインアウトボタンを表示 -->
       <!-- `v-if` は条件が true の場合のみ DOM にレンダリングする -->
-      <div v-if="auth.isAuthenticated" class="d-flex align-items-center ms-auto gap-2 overflow-hidden">
+      <div v-if="auth.isAuthenticated" class="d-flex align-items-center ms-auto">
         <!-- `auth.user?.username` の `?` はオプショナルチェーン: user が null でもエラーにならない -->
-        <!-- d-none d-sm-inline: xs では非表示、sm 以上で表示（ナビバー幅節約） -->
-        <span class="text-white d-none d-sm-inline text-truncate" style="max-width: 150px">{{ auth.user?.username }}</span>
+        <span class="text-white me-3">{{ auth.user?.username }}</span>
         <!-- `@click` はクリックイベントリスナー。handleSignout を呼び出す -->
-        <button class="btn btn-outline-light btn-sm flex-shrink-0" @click="handleSignout">
+        <button class="btn btn-outline-light btn-sm" @click="handleSignout">
           サインアウト
         </button>
       </div>
