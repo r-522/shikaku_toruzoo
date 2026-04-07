@@ -29,8 +29,10 @@ OK なら自動的に certStore.add() を呼ぶ連携処理を行う。
     <div class="row g-3 mb-4">
       <!-- 所持資格数 -->
       <div class="col-4">
-        <div class="card text-center shadow-sm">
-          <div class="card-body py-2">
+        <!-- overflow-hidden: 横幅が狭い端末でラベルがカード外に出るのを防ぐ -->
+        <div class="card text-center shadow-sm overflow-hidden">
+          <!-- p-2: デフォルトの px-3(24px) を px-2(8px) に縮小し "勉強時間(h)" が収まる幅を確保 -->
+          <div class="card-body p-2">
             <div class="fs-3 fw-bold" style="color: #1A73E8">{{ certCount }}</div>
             <div class="text-muted small">所持資格</div>
           </div>
@@ -38,8 +40,8 @@ OK なら自動的に certStore.add() を呼ぶ連携処理を行う。
       </div>
       <!-- 合格数 -->
       <div class="col-4">
-        <div class="card text-center shadow-sm">
-          <div class="card-body py-2">
+        <div class="card text-center shadow-sm overflow-hidden">
+          <div class="card-body p-2">
             <div class="fs-3 fw-bold" style="color: #2E7D32">{{ passedCount }}</div>
             <div class="text-muted small">合格</div>
           </div>
@@ -47,8 +49,8 @@ OK なら自動的に certStore.add() を呼ぶ連携処理を行う。
       </div>
       <!-- 総勉強時間 -->
       <div class="col-4">
-        <div class="card text-center shadow-sm">
-          <div class="card-body py-2">
+        <div class="card text-center shadow-sm overflow-hidden">
+          <div class="card-body p-2">
             <div class="fs-3 fw-bold" style="color: #F57F17">{{ totalStudyHours }}</div>
             <div class="text-muted small">勉強時間(h)</div>
           </div>
